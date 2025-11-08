@@ -16,6 +16,9 @@ jobs:
       - name: Select Xcode 15.4
         run: sudo xcode-select -switch /Applications/Xcode_15.4.app
 
+      - name: Debug repository tree
+        run: ls -R
+
       - name: Resolve packages
         run: xcodebuild -project KenKenApp.xcodeproj -list
 
