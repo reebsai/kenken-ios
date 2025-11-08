@@ -16,14 +16,13 @@ jobs:
       - name: Select Xcode 15.4
         run: sudo xcode-select -switch /Applications/Xcode_15.4.app
 
-      - name: Debug repository tree
-        run: ls -R
-
       - name: Resolve packages
         run: xcodebuild -project KenKenApp.xcodeproj -list
 
       - name: Build and test on simulator
-        run: xcodebuild \
-              -scheme KenKenApp \
-              -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
-              clean build test
+        run: |
+          xcodebuild \
+            -project KenKenApp.xcodeproj \
+            -scheme KenKenApp \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            clean build test
