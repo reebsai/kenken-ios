@@ -1,0 +1,26 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 15.4
+        run: sudo xcode-select -switch /Applications/Xcode_15.4.app
+
+      - name: Resolve packages
+        run: xcodebuild -project KenKenApp.xcodeproj -list
+
+      - name: Build and test on simulator
+        run: xcodebuild \
+              -scheme KenKenApp \
+              -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+              clean build test
