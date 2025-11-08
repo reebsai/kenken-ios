@@ -46,6 +46,7 @@ struct KenKenGridView: View {
                     }
                 }
             }
+            .frame(width: gridSize, height: gridSize, alignment: .topLeading)
         }
     }
 

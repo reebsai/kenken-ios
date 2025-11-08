@@ -24,7 +24,7 @@ struct ContentView: View {
                     cageEvaluationProvider: viewModel.cageEvaluation,
                     onSelect: viewModel.select
                 )
-                .frame(height: 360)
+                .aspectRatio(1, contentMode: .fit)
                 .padding(.horizontal)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                 .overlay(
