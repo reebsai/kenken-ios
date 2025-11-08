@@ -7,7 +7,7 @@ struct KenKenGridView: View {
     let cageEvaluationProvider: (KenKenCage) -> KenKenCage.Evaluation
     let onSelect: (GridPosition) -> Void
 
-    private struct Direction: OptionSet {
+    struct Direction: OptionSet, Hashable {
         let rawValue: Int
 
         static let top = Direction(rawValue: 1 << 0)
