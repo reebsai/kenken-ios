@@ -16,6 +16,7 @@
 		6F9AC0DC2C1210A80000001E /* NumberPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9AC0D32C1210A800000015 /* NumberPadView.swift */; };
 		6F9AC0DD2C1210A80000001F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6F9AC0D42C1210A800000016 /* Assets.xcassets */; };
 		6F9AC0F42C1215B000000034 /* KenKenAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9AC0F22C1215B000000032 /* KenKenAppTests.swift */; };
+		6F9AC1032C1219600000003E /* KenKenApp.app in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F9AC0DE2C1210A800000020 /* KenKenApp.app */; }; 
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F9AC1032C1219600000003E /* KenKenApp.app in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -269,6 +271,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				DEFINES_MODULE = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -293,6 +296,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				DEFINES_MODULE = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -422,6 +426,7 @@
 		6F9AC0FB2C1215B00000003B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -433,12 +438,14 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KenKenApp.app/KenKenApp";
 			};
 			name = Debug;
 		};
 		6F9AC0FC2C1215B00000003C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -450,6 +457,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/KenKenApp.app/KenKenApp";
 			};
 			name = Release;
 		};
