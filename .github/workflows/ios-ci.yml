@@ -26,3 +26,27 @@ jobs:
             -scheme KenKenApp \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             clean build test
+
+      - name: Archive app (unsigned)
+        run: |
+          xcodebuild \
+            -project KenKenApp.xcodeproj \
+            -scheme KenKenApp \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/KenKenApp.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_STYLE=Manual \
+            archive
+
+      - name: Package IPA artifact
+        run: |
+          rm -rf build/ipa
+          mkdir -p build/ipa/Payload
+          cp -R build/KenKenApp.xcarchive/Products/Applications/KenKenApp.app build/ipa/Payload/
+          cd build/ipa
+          zip -r ../KenKenApp-unsigned.ipa Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KenKenApp-unsigned-ipa
+          path: build/KenKenApp-unsigned.ipa
