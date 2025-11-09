@@ -7,6 +7,9 @@ struct KenKenGridView: View {
     let cageEvaluationProvider: (KenKenCage) -> KenKenCage.Evaluation
     let onSelect: (GridPosition) -> Void
 
+    // Minimum tap size for comfortable interaction on small devices.
+    private let minCellSize: CGFloat = 32
+
     struct Direction: OptionSet, Hashable {
         let rawValue: Int
 
@@ -19,7 +22,8 @@ struct KenKenGridView: View {
     var body: some View {
         GeometryReader { proxy in
             let gridSize = min(proxy.size.width, proxy.size.height)
-            let cellSize = gridSize / CGFloat(puzzle.size)
+            let rawCellSize = gridSize / CGFloat(puzzle.size)
+            let cellSize = max(rawCellSize, minCellSize)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
             LazyVGrid(columns: columns, spacing: 0) {
@@ -46,7 +50,9 @@ struct KenKenGridView: View {
                     }
                 }
             }
-            .frame(width: gridSize, height: gridSize, alignment: .topLeading)
+            .frame(width: cellSize * CGFloat(puzzle.size),
+                   height: cellSize * CGFloat(puzzle.size),
+                   alignment: .topLeading)
         }
     }
 
@@ -93,6 +99,7 @@ private struct CellView: View {
         ZStack(alignment: .topLeading) {
             RoundedRectangle(cornerRadius: 6)
                 .fill(backgroundColor)
+                .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: 1.5)
 
             RoundedRectangle(cornerRadius: 6)
                 .strokeBorder(cellOutlineColor, lineWidth: 1)
@@ -113,6 +120,8 @@ private struct CellView: View {
                 Text("\(value)")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(valueColor)
+                    .scaleEffect(cellState == .selected ? 1.06 : 1.0)
+                    .animation(.spring(response: 0.25, dampingFraction: 0.8), value: cellState == .selected)
             }
         }
         .overlay(alignment: .topLeading) {
@@ -148,38 +157,60 @@ private struct CellView: View {
             }
         }
         .padding(1.5)
+        .animation(.easeInOut(duration: 0.18), value: cellState)
     }
 
     private var backgroundColor: Color {
         switch cellState {
         case .selected:
-            return Color.accentColor.opacity(0.2)
+            // Stronger highlight for active cell.
+            return Color.accentColor.opacity(0.28)
         case .conflict:
-            return Color.red.opacity(0.2)
+            return Color.red.opacity(0.3)
         case .correct:
-            return Color.green.opacity(0.18)
+            return Color.green.opacity(0.22)
         case .filled:
-            return Color.white.opacity(0.2)
+            return Color.white.opacity(0.20)
         case .empty:
-            return Color.white.opacity(0.08)
+            return Color.white.opacity(0.06)
         }
     }
 
     private var cellOutlineColor: Color {
         switch cellState {
         case .selected:
-            return Color.accentColor.opacity(0.6)
+            return Color.accentColor.opacity(0.9)
         case .conflict:
-            return Color.red.opacity(0.6)
+            return Color.red.opacity(0.8)
         case .correct:
-            return Color.green.opacity(0.6)
+            return Color.green.opacity(0.8)
         default:
-            return Color.white.opacity(0.25)
+            return Color.white.opacity(0.22)
         }
     }
 
     private var valueColor: Color {
         cellState == .conflict ? .red : .white
+    }
+
+    private var shadowColor: Color {
+        switch cellState {
+        case .selected:
+            return Color.accentColor.opacity(0.3)
+        case .conflict:
+            return Color.red.opacity(0.35)
+        default:
+            return Color.black.opacity(0.18)
+        }
+    }
+
+    private var shadowRadius: CGFloat {
+        switch cellState {
+        case .selected, .conflict:
+            return 4
+        default:
+            return 2
+        }
     }
 
     private var headerColor: Color {

@@ -8,8 +8,9 @@ final class KenKenGameViewModel: ObservableObject {
     @Published var selectedPosition: GridPosition?
     @Published private(set) var isSolved: Bool = false
 
-    init() {
-        let puzzle = KenKenGenerator.makePuzzle()
+    init(seed: UInt64? = nil) {
+        // Allow deterministic puzzles when a seed is provided (debugging / snapshots).
+        let puzzle = KenKenGenerator.makePuzzle(size: 9, seed: seed)
         self.puzzle = puzzle
         self.userGrid = Array(repeating: Array(repeating: nil, count: puzzle.size), count: puzzle.size)
     }
@@ -30,8 +31,9 @@ final class KenKenGameViewModel: ObservableObject {
         refreshSolvedState()
     }
 
-    func newPuzzle() {
-        let puzzle = KenKenGenerator.makePuzzle(size: puzzle.size)
+    func newPuzzle(seed: UInt64? = nil) {
+        // If a seed is provided, generation is deterministic; otherwise remains random.
+        let puzzle = KenKenGenerator.makePuzzle(size: puzzle.size, seed: seed)
         self.puzzle = puzzle
         self.userGrid = Array(repeating: Array(repeating: nil, count: puzzle.size), count: puzzle.size)
         selectedPosition = nil
