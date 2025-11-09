@@ -3,13 +3,10 @@ import SwiftUI
 struct ContentView: View {
     // For debugging: inject a fixed seed here (e.g. 42) to get a stable puzzle layout.
     // For production builds, keep this nil to preserve randomness.
-    private let debugSeed: UInt64? = nil
+    private static let debugSeed: UInt64? = nil
 
-    @StateObject private var viewModel: KenKenGameViewModel
-
-    init() {
-        _viewModel = StateObject(wrappedValue: KenKenGameViewModel(seed: debugSeed))
-    }
+    // Use the static seed so it does not capture mutating self in init.
+    @StateObject private var viewModel = KenKenGameViewModel(seed: ContentView.debugSeed)
 
     private let backgroundGradient = LinearGradient(
         colors: [Color(hex: 0x17153B), Color(hex: 0x433D8B), Color(hex: 0x6C63FF)],
@@ -73,8 +70,8 @@ struct ContentView: View {
 
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                    // Use same debugSeed to regenerate the same layout when desired.
-                    viewModel.newPuzzle(seed: debugSeed)
+                    // Use same debugSeed (if set) to regenerate a consistent layout in debug.
+                    viewModel.newPuzzle(seed: ContentView.debugSeed)
                 }
             } label: {
                 Label("New", systemImage: "arrow.2.circlepath")
