@@ -22,15 +22,14 @@ struct ContentView: View {
             if let size = selectedSize, let viewModel = viewModelHolder.viewModel {
                 gameView(size: size, viewModel: viewModel)
             } else {
-                // NOTE: If CI reports "Cannot find 'SizeSelectionView' in scope" here while it
-                //       compiles locally, ensure:
-                //       1) KenKenApp/Views/SizeSelectionView.swift is added to the KenKenApp target in KenKenApp.xcodeproj
-                //       2) CI is building the same xcodeproj (kenken-ios/KenKenApp.xcodeproj) and includes that file.
-                SizeSelectionView { size in
-                    let clampedSize = min(max(size, 4), 9)
-                    let vm = KenKenGameViewModel(size: clampedSize, seed: ContentView.debugSeed)
+                // Let the user choose any size from 4...9.
+                // We always render puzzles as square grids driven by device width.
+                SizeSelectionView { requestedSize in
+                    let clamped = min(max(requestedSize, 4), 9)
+                    let vm = KenKenGameViewModel(size: clamped, seed: ContentView.debugSeed)
                     viewModelHolder.viewModel = vm
-                    selectedSize = clampedSize
+                    selectedSize = clamped
+                    print("[Size] requested=\(requestedSize), effective=\(clamped)")
                 }
             }
         }
@@ -38,41 +37,54 @@ struct ContentView: View {
 
     @ViewBuilder
     private func gameView(size: Int, viewModel: KenKenGameViewModel) -> some View {
-        ZStack {
-            backgroundGradient
-                .ignoresSafeArea()
+        GeometryReader { proxy in
+            ZStack {
+                backgroundGradient
+                    .ignoresSafeArea()
 
-            VStack(spacing: 28) {
-                header(size: size, viewModel: viewModel)
+                VStack(spacing: 24) {
+                    header(size: viewModel.puzzle.size, viewModel: viewModel)
 
-                KenKenGridView(
-                    puzzle: viewModel.puzzle,
-                    userGrid: viewModel.userGrid,
-                    cellStateProvider: viewModel.cellState,
-                    cageEvaluationProvider: viewModel.cageEvaluation,
-                    onSelect: viewModel.select
-                )
-                .aspectRatio(1, contentMode: .fit)
-                .padding(.horizontal)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1.2)
-                )
-                .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 12)
+                    // Square puzzle area strictly driven by device width.
+                    let gridSide = proxy.size.width - 32
 
-                NumberPadView(
-                    numbers: Array(1...viewModel.puzzle.size),
-                    onNumberSelected: viewModel.enter,
-                    onClear: viewModel.clearSelection
-                )
-                .padding(.horizontal)
+                    KenKenGridView(
+                        puzzle: viewModel.puzzle,
+                        userGrid: viewModel.userGrid,
+                        cellStateProvider: viewModel.cellState,
+                        cageEvaluationProvider: viewModel.cageEvaluation,
+                        onSelect: viewModel.select
+                    )
+                    .frame(width: gridSide, height: gridSide)
+                    .background(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1.2)
+                    )
+                    .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 12)
 
-                if viewModel.isSolved {
-                    solvedBanner
+                    NumberPadView(
+                        numbers: Array(1...viewModel.puzzle.size),
+                        onNumberSelected: viewModel.enter,
+                        onClear: viewModel.clearSelection
+                    )
+                    .padding(.horizontal)
+
+                    if viewModel.isSolved {
+                        solvedBanner
+                    }
+
+                    Spacer(minLength: 0)
                 }
+                .padding(.vertical, 24)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             }
-            .padding(.vertical, 32)
+            .onAppear {
+                print("[Layout] gameView screenSize=\(proxy.size), puzzleSize=\(viewModel.puzzle.size)")
+            }
         }
         .animation(.easeInOut(duration: 0.25), value: viewModel.isSolved)
     }
