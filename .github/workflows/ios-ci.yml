@@ -37,16 +37,24 @@ jobs:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_STYLE=Manual \
             archive
 
+      - name: Derive build version from run number
+        id: version
+        run: |
+          # Use GitHub run number as incremental build version suffix.
+          # Example: v${{ github.run_number }} -> KenKenApp-unsigned-v123.ipa
+          echo "VNUMBER=${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
       - name: Package IPA artifact
         run: |
           rm -rf build/ipa
           mkdir -p build/ipa/Payload
           cp -R build/KenKenApp.xcarchive/Products/Applications/KenKenApp.app build/ipa/Payload/
           cd build/ipa
-          zip -r ../KenKenApp-unsigned.ipa Payload
+          zip -r "../KenKenApp-unsigned-v${{ steps.version.outputs.VNUMBER }}.ipa" Payload
 
-      - name: Upload IPA artifact
+      - name: Upload versioned IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KenKenApp-unsigned-ipa
-          path: build/KenKenApp-unsigned.ipa
+          # Distinct artifact per run, e.g. KenKenApp-unsigned-v123
+          name: KenKenApp-unsigned-v${{ steps.version.outputs.VNUMBER }}
+          path: build/KenKenApp-unsigned-v${{ steps.version.outputs.VNUMBER }}.ipa
