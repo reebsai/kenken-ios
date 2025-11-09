@@ -68,9 +68,10 @@ struct KenKenGridView: View {
 
                 Spacer(minLength: 0)
             }
+            // Let the grid take needed height inside the provided area.
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
             #if DEBUG
-            print("[GridLayout] proxy=\(proxy.size) cellSize=\(cellSize) rows=\(puzzle.size) totalHeight=\(cellSize * CGFloat(puzzle.size)))")
+            print("[GridLayout] proxy=\(proxy.size) cellSize=\(cellSize) rows=\(puzzle.size) totalHeight=\(cellSize * CGFloat(puzzle.size))")
             #endif
         }
     }
