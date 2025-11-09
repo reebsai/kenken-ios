@@ -109,4 +109,20 @@ struct KenKenPuzzle {
         guard let cage = cage(for: position) else { return false }
         return cage.header == position
     }
+
+    /// Returns true when the given user grid fully and correctly matches the solution.
+    /// Empty cells or mismatches cause false.
+    func isSolved(by userGrid: [[Int?]]) -> Bool {
+        guard userGrid.count == size else { return false }
+        for (rowIndex, row) in userGrid.enumerated() {
+            guard row.count == size else { return false }
+            for (colIndex, entry) in row.enumerated() {
+                guard let value = entry else { return false }
+                if value != solution[rowIndex][colIndex] {
+                    return false
+                }
+            }
+        }
+        return true
+    }
 }

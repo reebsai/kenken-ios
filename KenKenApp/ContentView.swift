@@ -11,12 +11,6 @@ struct ContentView: View {
     // Lazily created when a size is chosen.
     @StateObject private var viewModelHolder = ViewModelHolder()
 
-    private let backgroundGradient = LinearGradient(
-        colors: [Color(hex: 0x17153B), Color(hex: 0x433D8B), Color(hex: 0x6C63FF)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
     var body: some View {
         Group {
             if let size = selectedSize, let viewModel = viewModelHolder.viewModel {
@@ -25,11 +19,17 @@ struct ContentView: View {
                 // Let the user choose any size from 4...9.
                 // We always render puzzles as square grids driven by device width.
                 SizeSelectionView { requestedSize in
-                    let clamped = min(max(requestedSize, 4), 9)
-                    let vm = KenKenGameViewModel(size: clamped, seed: ContentView.debugSeed)
+                    let clamped = KenKenGameViewModel.clampedSize(requestedSize)
+                    let vm = KenKenGameViewModel(
+                        size: clamped,
+                        puzzleProvider: DefaultPuzzleProvider(seed: ContentView.debugSeed),
+                        seed: ContentView.debugSeed
+                    )
                     viewModelHolder.viewModel = vm
                     selectedSize = clamped
+                    #if DEBUG
                     print("[Size] requested=\(requestedSize), effective=\(clamped)")
+                    #endif
                 }
             }
         }
@@ -39,7 +39,7 @@ struct ContentView: View {
     private func gameView(size: Int, viewModel: KenKenGameViewModel) -> some View {
         GeometryReader { proxy in
             ZStack {
-                backgroundGradient
+                Color.kkBackgroundGradient
                     .ignoresSafeArea()
 
                 VStack(spacing: 24) {
@@ -156,11 +156,3 @@ struct ContentView: View {
     }
 }
 
-private extension Color {
-    init(hex: UInt, alpha: Double = 1.0) {
-        let red = Double((hex >> 16) & 0xff) / 255
-        let green = Double((hex >> 8) & 0xff) / 255
-        let blue = Double(hex & 0xff) / 255
-        self.init(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
-    }
-}

@@ -8,11 +8,24 @@ final class KenKenGameViewModel: ObservableObject {
     @Published var selectedPosition: GridPosition?
     @Published private(set) var isSolved: Bool = false
 
-    init(size: Int, seed: UInt64? = nil) {
-        let clampedSize = min(max(size, 4), 9)
-        // Allow deterministic puzzles when a seed is provided (debugging / snapshots).
-        let puzzle = KenKenGenerator.makePuzzle(size: clampedSize, seed: seed)
-        self.puzzle = puzzle
+    static func clampedSize(_ size: Int) -> Int {
+        min(max(size, 4), 9)
+    }
+
+    private let puzzleProvider: PuzzleProvider
+
+    init(size: Int, puzzleProvider: PuzzleProvider = DefaultPuzzleProvider(), seed: UInt64? = nil) {
+        let clampedSize = Self.clampedSize(size)
+        self.puzzleProvider = puzzleProvider
+        // If a seed is provided, prefer a seeded provider for deterministic generation.
+        if let seed {
+            let seededProvider = DefaultPuzzleProvider(seed: seed)
+            let puzzle = seededProvider.makePuzzle(size: clampedSize)
+            self.puzzle = puzzle
+        } else {
+            let puzzle = puzzleProvider.makePuzzle(size: clampedSize)
+            self.puzzle = puzzle
+        }
         self.userGrid = Array(repeating: Array(repeating: nil, count: puzzle.size), count: puzzle.size)
     }
 
@@ -33,11 +46,18 @@ final class KenKenGameViewModel: ObservableObject {
     }
 
     func newPuzzle(seed: UInt64? = nil) {
-        // If a seed is provided, generation is deterministic; otherwise remains random.
-        let currentSize = min(max(puzzle.size, 4), 9)
-        let puzzle = KenKenGenerator.makePuzzle(size: currentSize, seed: seed)
-        self.puzzle = puzzle
-        self.userGrid = Array(repeating: Array(repeating: nil, count: puzzle.size), count: puzzle.size)
+        let currentSize = Self.clampedSize(puzzle.size)
+        let nextPuzzle: KenKenPuzzle
+        if let seed {
+            // Deterministic puzzle for the same size.
+            let seededProvider = DefaultPuzzleProvider(seed: seed)
+            nextPuzzle = seededProvider.makePuzzle(size: currentSize)
+        } else {
+            nextPuzzle = puzzleProvider.makePuzzle(size: currentSize)
+        }
+
+        self.puzzle = nextPuzzle
+        self.userGrid = Array(repeating: Array(repeating: nil, count: nextPuzzle.size), count: nextPuzzle.size)
         selectedPosition = nil
         isSolved = false
     }
@@ -96,11 +116,6 @@ final class KenKenGameViewModel: ObservableObject {
     }
 
     private func refreshSolvedState() {
-        isSolved = zip(userGrid, puzzle.solution).allSatisfy { userRow, solutionRow in
-            zip(userRow, solutionRow).allSatisfy { entry, target in
-                guard let value = entry else { return false }
-                return value == target
-            }
-        }
+        isSolved = puzzle.isSolved(by: userGrid)
     }
 }

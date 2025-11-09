@@ -5,15 +5,9 @@ struct SizeSelectionView: View {
 
     private let availableSizes = Array(4...9)
 
-    private let backgroundGradient = LinearGradient(
-        colors: [Color(hex: 0x17153B), Color(hex: 0x433D8B), Color(hex: 0x6C63FF)],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
-
     var body: some View {
         ZStack {
-            backgroundGradient
+            Color.kkBackgroundGradient
                 .ignoresSafeArea()
 
             VStack(spacing: 32) {
@@ -69,15 +63,5 @@ struct SizeSelectionView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-    }
-}
-
-// Reuse the same Color(hex:) helper as in ContentView to keep visuals consistent.
-private extension Color {
-    init(hex: UInt, alpha: Double = 1.0) {
-        let red = Double((hex >> 16) & 0xff) / 255
-        let green = Double((hex >> 8) & 0xff) / 255
-        let blue = Double(hex & 0xff) / 255
-        self.init(.sRGB, red: red, green: green, blue: blue, opacity: alpha)
     }
 }

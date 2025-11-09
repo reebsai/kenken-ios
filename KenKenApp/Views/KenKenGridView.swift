@@ -21,10 +21,13 @@ struct KenKenGridView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // Use the minimum of width/height so the full 9x9 always fits
+            // Use the minimum of width/height so the grid always fits
             // inside the allotted square area from ContentView.
             let gridSize = min(proxy.size.width, proxy.size.height)
-            let cellSize = gridSize / CGFloat(puzzle.size)
+            // Enforce a minimum tap target size; if space is too small,
+            // cells stay at minCellSize and the grid may not fill completely,
+            // but remains usable.
+            let cellSize = max(gridSize / CGFloat(puzzle.size), minCellSize)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
             VStack(spacing: 0) {

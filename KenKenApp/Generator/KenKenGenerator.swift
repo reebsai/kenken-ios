@@ -7,20 +7,70 @@ import Foundation
 /// - Optional deterministic mode for debugging (seeded RNG)
 enum KenKenGenerator {
 
+    // MARK: - Internal Random Source
+
+    /// Small wrapper to unify seeded and system RNG behavior.
+    private struct RandomSource {
+        private var seeded: any RandomNumberGenerator
+        private var useSeeded: Bool
+
+        init(seed: UInt64?) {
+            if let seed {
+                self.seeded = SeededGenerator(seed: seed)
+                self.useSeeded = true
+            } else {
+                self.seeded = SystemRandomNumberGenerator()
+                self.useSeeded = false
+            }
+        }
+
+        mutating func nextUInt64() -> UInt64 {
+            if useSeeded, var generator = seeded as? SeededGenerator {
+                let value = generator.next()
+                seeded = generator
+                return value
+            } else if var generator = seeded as? SystemRandomNumberGenerator {
+                let value = generator.next()
+                seeded = generator
+                return value
+            } else {
+                var fallback = SystemRandomNumberGenerator()
+                let value = fallback.next()
+                seeded = fallback
+                useSeeded = false
+                return value
+            }
+        }
+
+        mutating func randomIndex(upperBound: Int) -> Int {
+            precondition(upperBound > 0)
+            return Int(nextUInt64() % UInt64(upperBound))
+        }
+
+        mutating func randomBool() -> Bool {
+            (nextUInt64() & 1) == 0
+        }
+
+        mutating func randomElement<T>(_ array: [T]) -> T? {
+            guard !array.isEmpty else { return nil }
+            return array[randomIndex(upperBound: array.count)]
+        }
+    }
+
     /// Create a puzzle.
     /// - Parameters:
     ///   - size: Grid size (default 9).
     ///   - seed: Optional seed for deterministic generation (for debugging / snapshots).
     static func makePuzzle(size: Int = 9, seed: UInt64? = nil) -> KenKenPuzzle {
-        var rng = seed.map(SeededGenerator.init(seed:)) // deterministic if seed provided
-        let solution = makeLatinSolution(size: size, rng: &rng)
-        let cages = createCages(from: solution, rng: &rng)
+        var random = RandomSource(seed: seed)
+        let solution = makeLatinSolution(size: size, random: &random)
+        let cages = createCages(from: solution, random: &random)
         return KenKenPuzzle(size: size, solution: solution, cages: cages)
     }
 
     /// Build a Latin square by permuting a simple base pattern.
-    /// If rng is provided, shuffles are deterministic.
-    private static func makeLatinSolution<R: RandomNumberGenerator>(size: Int, rng: inout R?) -> [[Int]] {
+    /// If seed is provided, shuffles are deterministic via RandomSource.
+    private static func makeLatinSolution(size: Int, random: inout RandomSource) -> [[Int]] {
         let base = (0..<size).map { row in
             (0..<size).map { column in ((row + column) % size) + 1 }
         }
@@ -29,16 +79,20 @@ enum KenKenGenerator {
         var columnOrder = Array(0..<size)
         var valueOrder = Array(1...size)
 
-        if var seeded = rng {
-            rowOrder.shuffle(using: &seeded)
-            columnOrder.shuffle(using: &seeded)
-            valueOrder.shuffle(using: &seeded)
-            rng = seeded
-        } else {
-            rowOrder.shuffle()
-            columnOrder.shuffle()
-            valueOrder.shuffle()
+        // Deterministic permutations based on RandomSource.
+        func shuffleUsingRandomSource(_ array: inout [Int]) {
+            guard array.count > 1 else { return }
+            for i in stride(from: array.count - 1, through: 1, by: -1) {
+                let j = random.randomIndex(upperBound: i + 1)
+                if i != j {
+                    array.swapAt(i, j)
+                }
+            }
         }
+
+        shuffleUsingRandomSource(&rowOrder)
+        shuffleUsingRandomSource(&columnOrder)
+        shuffleUsingRandomSource(&valueOrder)
 
         let permutedRows = rowOrder.map { base[$0] }
         let permutedGrid = permutedRows.map { row in
@@ -51,8 +105,8 @@ enum KenKenGenerator {
     }
 
     /// Create contiguous cages over the solution grid.
-    /// If rng is provided, cage layout and operation choices are deterministic.
-    private static func createCages<R: RandomNumberGenerator>(from solution: [[Int]], rng: inout R?) -> [KenKenCage] {
+    /// Deterministic when RandomSource is seeded.
+    private static func createCages(from solution: [[Int]], random: inout RandomSource) -> [KenKenCage] {
         let size = solution.count
         var available = Set((0..<size).flatMap { row in
             (0..<size).map { GridPosition(row: row, col: $0) }
@@ -60,16 +114,7 @@ enum KenKenGenerator {
 
         var cages: [KenKenCage] = []
 
-        func randomElement<T>(_ array: [T]) -> T? {
-            if var seeded = rng {
-                let idx = Int.random(in: 0..<array.count, using: &seeded)
-                rng = seeded
-                return array[idx]
-            }
-            return array.randomElement()
-        }
-
-        while let start = randomElement(Array(available)) {
+        while let start = random.randomElement(Array(available)) {
             available.remove(start)
 
             var cageCells: [GridPosition] = [start]
@@ -82,10 +127,10 @@ enum KenKenGenerator {
                 desiredSize = 1
             } else {
                 let options = Array(2...maxSize)
-                desiredSize = randomElement(options) ?? maxSize
+                desiredSize = random.randomElement(options) ?? maxSize
             }
 
-            while cageCells.count < desiredSize, let next = randomElement(Array(frontier)) {
+            while cageCells.count < desiredSize, let next = random.randomElement(Array(frontier)) {
                 frontier.remove(next)
                 guard available.contains(next) else { continue }
                 available.remove(next)
@@ -95,17 +140,17 @@ enum KenKenGenerator {
                 frontier.formUnion(newNeighbors)
             }
 
-            let cage = makeCage(from: cageCells, solution: solution, rng: &rng)
+            let cage = makeCage(from: cageCells, solution: solution, random: &random)
             cages.append(cage)
         }
 
-        let merged = mergeSingletonCagesIfNeeded(cages, solution: solution, rng: &rng)
+        let merged = mergeSingletonCagesIfNeeded(cages, solution: solution, random: &random)
         return merged
     }
 
     /// Choose operation and target for a cage.
     /// Restricts to KenKenOperation set and keeps values reasonable.
-    private static func makeCage<R: RandomNumberGenerator>(from cells: [GridPosition], solution: [[Int]], rng: inout R?) -> KenKenCage {
+    private static func makeCage(from cells: [GridPosition], solution: [[Int]], random: inout RandomSource) -> KenKenCage {
         let values = cells.map { solution[$0.row][$0.col] }
 
         if cells.count == 1, let value = values.first {
@@ -113,13 +158,7 @@ enum KenKenGenerator {
         }
 
         func randomChoice<T>(_ options: [T]) -> T? {
-            guard !options.isEmpty else { return nil }
-            if var seeded = rng {
-                let idx = Int.random(in: 0..<options.count, using: &seeded)
-                rng = seeded
-                return options[idx]
-            }
-            return options.randomElement()
+            random.randomElement(options)
         }
 
         if cells.count == 2 {
@@ -147,17 +186,7 @@ enum KenKenGenerator {
         let sum = values.reduce(0, +)
         let product = values.reduce(1, *)
         let canUseMultiplication = product <= 500
-        let useMultiplication: Bool
-        if canUseMultiplication {
-            if var seeded = rng {
-                useMultiplication = Bool.random(using: &seeded)
-                rng = seeded
-            } else {
-                useMultiplication = Bool.random()
-            }
-        } else {
-            useMultiplication = false
-        }
+        let useMultiplication: Bool = canUseMultiplication ? random.randomBool() : false
 
         let operation: KenKenOperation = useMultiplication ? .multiplication : .addition
         let target = useMultiplication ? product : sum
@@ -176,7 +205,7 @@ enum KenKenGenerator {
 
     /// Merge singleton cages into neighboring cages when possible.
     /// Ensures resulting cages stay contiguous and reasonably sized.
-    private static func mergeSingletonCagesIfNeeded<R: RandomNumberGenerator>(_ cages: [KenKenCage], solution: [[Int]], rng: inout R?) -> [KenKenCage] {
+    private static func mergeSingletonCagesIfNeeded(_ cages: [KenKenCage], solution: [[Int]], random: inout RandomSource) -> [KenKenCage] {
         guard cages.contains(where: { $0.cells.count == 1 }) else { return cages }
 
         var cages = cages
@@ -190,16 +219,6 @@ enum KenKenGenerator {
                 }
             }
             return map
-        }
-
-        func randomChoice<T>(_ array: [T]) -> T? {
-            guard !array.isEmpty else { return nil }
-            if var seeded = rng {
-                let idx = Int.random(in: 0..<array.count, using: &seeded)
-                rng = seeded
-                return array[idx]
-            }
-            return array.randomElement()
         }
 
         var cellToCage = rebuildIndexMap()
@@ -219,7 +238,7 @@ enum KenKenGenerator {
             }
 
             let preferred = neighborCandidates.filter { cages[$0.1].cells.count < 4 }
-            guard let target = randomChoice(preferred.isEmpty ? neighborCandidates : preferred) else {
+            guard let target = random.randomElement(preferred.isEmpty ? neighborCandidates : preferred) else {
                 index += 1
                 continue
             }
@@ -229,7 +248,7 @@ enum KenKenGenerator {
             combinedCells.append(cell)
 
             // Rebuild cage with new operation/target, keeping contiguity due to adjacency choice.
-            cages[neighborIndex] = makeCage(from: combinedCells, solution: solution, rng: &rng)
+            cages[neighborIndex] = makeCage(from: combinedCells, solution: solution, random: &random)
             cages.remove(at: index)
             cellToCage = rebuildIndexMap()
         }
