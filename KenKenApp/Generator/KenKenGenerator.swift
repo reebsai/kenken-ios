@@ -44,10 +44,12 @@ enum KenKenGenerator {
             var cageCells: [GridPosition] = [start]
             var frontier = Set(neighbors(of: start, size: size).filter { available.contains($0) })
 
-            let maxSize = min(4, cageCells.count + frontier.count + available.count)
-            var desiredSize = 1
-            if maxSize > 1 {
-                desiredSize = Int.random(in: 1...maxSize)
+            let maxSize = min(4, 1 + frontier.count)
+            let desiredSize: Int
+            if frontier.isEmpty {
+                desiredSize = 1
+            } else {
+                desiredSize = Int.random(in: 2...maxSize)
             }
 
             while cageCells.count < desiredSize, let next = frontier.randomElement() {
@@ -64,7 +66,7 @@ enum KenKenGenerator {
             cages.append(cage)
         }
 
-        return cages
+        return mergeSingletonCagesIfNeeded(cages, solution: solution)
     }
 
     private static func makeCage(from cells: [GridPosition], solution: [[Int]]) -> KenKenCage {
@@ -107,5 +109,53 @@ enum KenKenGenerator {
             position.neighbor(dRow: 0, dCol: -1, size: size),
             position.neighbor(dRow: 0, dCol: 1, size: size)
         ].compactMap { $0 }
+    }
+
+    private static func mergeSingletonCagesIfNeeded(_ cages: [KenKenCage], solution: [[Int]]) -> [KenKenCage] {
+        guard cages.contains(where: { $0.cells.count == 1 }) else { return cages }
+
+        var cages = cages
+        let size = solution.count
+
+        func rebuildIndexMap() -> [GridPosition: Int] {
+            var map: [GridPosition: Int] = [:]
+            for (idx, cage) in cages.enumerated() {
+                for cell in cage.cells {
+                    map[cell] = idx
+                }
+            }
+            return map
+        }
+
+        var cellToCage = rebuildIndexMap()
+        var index = 0
+
+        while index < cages.count {
+            let cage = cages[index]
+            guard cage.cells.count == 1, let cell = cage.cells.first else {
+                index += 1
+                continue
+            }
+
+            let neighborCandidates: [(GridPosition, Int)] = neighbors(of: cell, size: size).compactMap { neighbor in
+                guard let neighborIndex = cellToCage[neighbor], neighborIndex != index else { return nil }
+                return (neighbor, neighborIndex)
+            }
+
+            guard let target = neighborCandidates.first(where: { cages[$0.1].cells.count < 4 }) ?? neighborCandidates.first else {
+                index += 1
+                continue
+            }
+
+            let neighborIndex = target.1
+
+            var combinedCells = cages[neighborIndex].cells
+            combinedCells.append(cell)
+            cages[neighborIndex] = makeCage(from: combinedCells, solution: solution)
+            cages.remove(at: index)
+            cellToCage = rebuildIndexMap()
+        }
+
+        return cages
     }
 }

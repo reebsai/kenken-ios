@@ -95,7 +95,7 @@ private struct CellView: View {
                 .fill(backgroundColor)
 
             RoundedRectangle(cornerRadius: 6)
-                .strokeBorder(borderColor, lineWidth: 1)
+                .strokeBorder(cellOutlineColor, lineWidth: 1)
 
             if let cage, isHeader {
                 VStack(alignment: .leading, spacing: 2) {
@@ -119,7 +119,7 @@ private struct CellView: View {
             if let top = borders[.top] {
                 Rectangle()
                     .frame(height: top)
-                    .foregroundStyle(Color.primary.opacity(0.35))
+                    .foregroundStyle(cageBorderColor(for: top))
                     .offset(y: -0.5)
             }
         }
@@ -127,7 +127,7 @@ private struct CellView: View {
             if let bottom = borders[.bottom] {
                 Rectangle()
                     .frame(height: bottom)
-                    .foregroundStyle(Color.primary.opacity(0.35))
+                    .foregroundStyle(cageBorderColor(for: bottom))
                     .offset(y: 0.5)
             }
         }
@@ -135,7 +135,7 @@ private struct CellView: View {
             if let left = borders[.left] {
                 Rectangle()
                     .frame(width: left)
-                    .foregroundStyle(Color.primary.opacity(0.35))
+                    .foregroundStyle(cageBorderColor(for: left))
                     .offset(x: -0.5)
             }
         }
@@ -143,11 +143,11 @@ private struct CellView: View {
             if let right = borders[.right] {
                 Rectangle()
                     .frame(width: right)
-                    .foregroundStyle(Color.primary.opacity(0.35))
+                    .foregroundStyle(cageBorderColor(for: right))
                     .offset(x: 0.5)
             }
         }
-        .padding(2)
+        .padding(1.5)
     }
 
     private var backgroundColor: Color {
@@ -159,13 +159,13 @@ private struct CellView: View {
         case .correct:
             return Color.green.opacity(0.18)
         case .filled:
-            return Color.secondary.opacity(0.15)
+            return Color.white.opacity(0.2)
         case .empty:
-            return Color.white.opacity(0.25)
+            return Color.white.opacity(0.08)
         }
     }
 
-    private var borderColor: Color {
+    private var cellOutlineColor: Color {
         switch cellState {
         case .selected:
             return Color.accentColor.opacity(0.6)
@@ -174,12 +174,12 @@ private struct CellView: View {
         case .correct:
             return Color.green.opacity(0.6)
         default:
-            return Color.primary.opacity(0.2)
+            return Color.white.opacity(0.25)
         }
     }
 
     private var valueColor: Color {
-        cellState == .conflict ? .red : .primary
+        cellState == .conflict ? .red : .white
     }
 
     private var headerColor: Color {
@@ -189,7 +189,7 @@ private struct CellView: View {
         case .violated:
             return .red
         case .incomplete:
-            return .secondary
+            return Color.white
         }
     }
 
@@ -198,5 +198,9 @@ private struct CellView: View {
             return "\(cage.target)"
         }
         return "\(cage.target)\(cage.operation.symbol)"
+    }
+
+    private func cageBorderColor(for thickness: CGFloat) -> Color {
+        thickness >= 2.5 ? Color.white.opacity(0.85) : Color.white.opacity(0.4)
     }
 }
