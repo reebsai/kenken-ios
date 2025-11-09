@@ -20,43 +20,41 @@ struct KenKenGridView: View {
     }
 
     var body: some View {
+        // Parent (`ContentView`) already constrains this view to a square:
+        // `.frame(width: gridSide, height: gridSide)`.
+        // Here we ensure the N×N grid fills that square exactly so all rows are visible.
         GeometryReader { proxy in
-            // Compute a square that fits inside the provided space.
-            let gridSize = min(proxy.size.width, proxy.size.height)
-            let cellSize = max(gridSize / CGFloat(puzzle.size), minCellSize)
+            let gridSide = min(proxy.size.width, proxy.size.height)
+            // Always scale cells to fit the available square: no enforced minimum that can clip rows.
+            let cellSize = gridSide / CGFloat(puzzle.size)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
-            VStack(spacing: 0) {
-                LazyVGrid(columns: columns, spacing: 0) {
-                    ForEach(0..<puzzle.size, id: \.self) { row in
-                        ForEach(0..<puzzle.size, id: \.self) { column in
-                            let position = GridPosition(row: row, col: column)
-                            let cage = puzzle.cage(for: position)
-                            let cellState = cellStateProvider(position)
-                            let cageEvaluation = cage.map(cageEvaluationProvider) ?? .incomplete
+            LazyVGrid(columns: columns, spacing: 0) {
+                ForEach(0..<puzzle.size, id: \.self) { row in
+                    ForEach(0..<puzzle.size, id: \.self) { column in
+                        let position = GridPosition(row: row, col: column)
+                        let cage = puzzle.cage(for: position)
+                        let cellState = cellStateProvider(position)
+                        let cageEvaluation = cage.map(cageEvaluationProvider) ?? .incomplete
 
-                            CellView(
-                                cellState: cellState,
-                                cage: cage,
-                                cageEvaluation: cageEvaluation,
-                                value: userGrid[row][column],
-                                isHeader: puzzle.isHeader(position),
-                                borders: borderDirections(for: position, cage: cage)
-                            )
-                            .frame(width: cellSize, height: cellSize)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onSelect(position)
-                            }
+                        CellView(
+                            cellState: cellState,
+                            cage: cage,
+                            cageEvaluation: cageEvaluation,
+                            value: userGrid[row][column],
+                            isHeader: puzzle.isHeader(position),
+                            borders: borderDirections(for: position, cage: cage)
+                        )
+                        .frame(width: cellSize, height: cellSize)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            onSelect(position)
                         }
                     }
                 }
-                // Do NOT hard clamp the grid height; let it expand to show all rows.
-                .frame(width: gridSize, alignment: .topLeading)
-
-                Spacer(minLength: 0)
             }
-            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+            // Make the grid fill the entire square passed by the parent.
+            .frame(width: gridSide, height: gridSide, alignment: .topLeading)
         }
     }
 
