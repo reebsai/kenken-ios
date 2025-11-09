@@ -10,36 +10,41 @@ enum KenKenGenerator {
     // MARK: - Internal Random Source
 
     /// Small wrapper to unify seeded and system RNG behavior.
+    /// IMPORTANT:
+    /// - When a seed is provided, behavior must be fully deterministic and never fall back to system RNG.
+    /// - When seed is nil, we use SystemRandomNumberGenerator.
     private struct RandomSource {
-        private var seeded: any RandomNumberGenerator
-        private var useSeeded: Bool
+        private var seeded: SeededGenerator?
+        private var system: SystemRandomNumberGenerator?
 
         init(seed: UInt64?) {
             if let seed {
                 self.seeded = SeededGenerator(seed: seed)
-                self.useSeeded = true
+                self.system = nil
             } else {
-                self.seeded = SystemRandomNumberGenerator()
-                self.useSeeded = false
+                self.seeded = nil
+                self.system = SystemRandomNumberGenerator()
             }
         }
 
         mutating func nextUInt64() -> UInt64 {
-            if useSeeded, var generator = seeded as? SeededGenerator {
+            if var generator = seeded {
                 let value = generator.next()
                 seeded = generator
-                return value
-            } else if var generator = seeded as? SystemRandomNumberGenerator {
-                let value = generator.next()
-                seeded = generator
-                return value
-            } else {
-                var fallback = SystemRandomNumberGenerator()
-                let value = fallback.next()
-                seeded = fallback
-                useSeeded = false
                 return value
             }
+
+            if var generator = system {
+                let value = generator.next()
+                system = generator
+                return value
+            }
+
+            // Fallback should never be hit, but keep a deterministic default to avoid flakiness.
+            var generator = SeededGenerator(seed: 0xDEADBEEF)
+            let value = generator.next()
+            seeded = generator
+            return value
         }
 
         mutating func randomIndex(upperBound: Int) -> Int {
