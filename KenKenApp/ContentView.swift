@@ -5,8 +5,11 @@ struct ContentView: View {
     // For production builds, keep this nil to preserve randomness.
     private static let debugSeed: UInt64? = nil
 
-    // Use the static seed so it does not capture mutating self in init.
-    @StateObject private var viewModel = KenKenGameViewModel(seed: ContentView.debugSeed)
+    // Currently selected grid size; nil means show size selection screen.
+    @State private var selectedSize: Int? = nil
+
+    // Lazily created when a size is chosen.
+    @StateObject private var viewModelHolder = ViewModelHolder()
 
     private let backgroundGradient = LinearGradient(
         colors: [Color(hex: 0x17153B), Color(hex: 0x433D8B), Color(hex: 0x6C63FF)],
@@ -15,12 +18,28 @@ struct ContentView: View {
     )
 
     var body: some View {
+        Group {
+            if let size = selectedSize, let viewModel = viewModelHolder.viewModel {
+                gameView(size: size, viewModel: viewModel)
+            } else {
+                SizeSelectionView { size in
+                    let clampedSize = min(max(size, 4), 9)
+                    let vm = KenKenGameViewModel(size: clampedSize, seed: ContentView.debugSeed)
+                    viewModelHolder.viewModel = vm
+                    selectedSize = clampedSize
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func gameView(size: Int, viewModel: KenKenGameViewModel) -> some View {
         ZStack {
             backgroundGradient
                 .ignoresSafeArea()
 
             VStack(spacing: 28) {
-                header
+                header(size: size, viewModel: viewModel)
 
                 KenKenGridView(
                     puzzle: viewModel.puzzle,
@@ -54,10 +73,15 @@ struct ContentView: View {
         .animation(.easeInOut(duration: 0.25), value: viewModel.isSolved)
     }
 
-    private var header: some View {
+    // Holder type to allow recreating the view model after @State changes.
+    final class ViewModelHolder: ObservableObject {
+        @Published var viewModel: KenKenGameViewModel?
+    }
+
+    private func header(size: Int, viewModel: KenKenGameViewModel) -> some View {
         HStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("KenKen 9×9")
+                Text("KenKen \(size)×\(size)")
                     .font(.system(size: 32, weight: .black, design: .rounded))
                     .foregroundStyle(Color.white.opacity(0.95))
 
@@ -70,7 +94,7 @@ struct ContentView: View {
 
             Button {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
-                    // Use same debugSeed (if set) to regenerate a consistent layout in debug.
+                    // Regenerate puzzle with the same selected size.
                     viewModel.newPuzzle(seed: ContentView.debugSeed)
                 }
             } label: {
@@ -80,6 +104,19 @@ struct ContentView: View {
                     .padding(.horizontal, 18)
             }
             .buttonStyle(SoftButtonStyle(tint: Color.white.opacity(0.22)))
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    // Go back to size selection; discard current game.
+                    selectedSize = nil
+                    viewModelHolder.viewModel = nil
+                }
+            } label: {
+                Image(systemName: "rectangle.portrait.and.arrow.backward")
+                    .font(.system(size: 18, weight: .bold))
+                    .padding(10)
+            }
+            .buttonStyle(SoftButtonStyle(tint: Color.white.opacity(0.18)))
         }
         .padding(.horizontal)
     }
