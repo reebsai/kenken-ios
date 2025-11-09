@@ -30,8 +30,20 @@ final class KenKenAppTests: XCTestCase {
         let puzzleA = KenKenGenerator.makePuzzle(size: size, seed: seed)
         let puzzleB = KenKenGenerator.makePuzzle(size: size, seed: seed)
 
-        XCTAssertEqual(puzzleA.size, size)
-        XCTAssertEqual(puzzleB.size, size)
+        // If this ever fails in CI, log enough info to understand the mismatch.
+        if puzzleA.solution != puzzleB.solution || cageSignature(puzzleA.cages) != cageSignature(puzzleB.cages) {
+            XCTFail(
+                """
+                Determinism violated for size=\(size), seed=\(seed)
+                solutionA=\(puzzleA.solution)
+                solutionB=\(puzzleB.solution)
+                cagesA=\(cageSignature(puzzleA.cages))
+                cagesB=\(cageSignature(puzzleB.cages))
+                """
+            )
+        }
+
+        XCTAssertEqual(puzzleA.size, puzzleB.size)
         XCTAssertEqual(puzzleA.solution, puzzleB.solution, "Same seed should produce identical solutions")
         XCTAssertEqual(puzzleA.cages.count, puzzleB.cages.count, "Same seed should produce identical cage count")
         XCTAssertEqual(
