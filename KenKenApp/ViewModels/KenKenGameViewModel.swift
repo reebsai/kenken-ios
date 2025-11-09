@@ -16,17 +16,22 @@ final class KenKenGameViewModel: ObservableObject {
 
     init(size: Int, puzzleProvider: PuzzleProvider = DefaultPuzzleProvider(), seed: UInt64? = nil) {
         let clampedSize = Self.clampedSize(size)
+
+        // Select the effective provider used to create the initial puzzle.
+        let effectiveProvider: PuzzleProvider = seed.map { DefaultPuzzleProvider(seed: $0) } ?? puzzleProvider
+
+        let puzzle = effectiveProvider.makePuzzle(size: clampedSize)
+        let userGrid = Array(
+            repeating: Array(repeating: Optional<Int>.none, count: puzzle.size),
+            count: puzzle.size
+        )
+
+        // Assign stored properties without referencing self before initialization completes.
         self.puzzleProvider = puzzleProvider
-        // If a seed is provided, prefer a seeded provider for deterministic generation.
-        if let seed {
-            let seededProvider = DefaultPuzzleProvider(seed: seed)
-            let puzzle = seededProvider.makePuzzle(size: clampedSize)
-            self.puzzle = puzzle
-        } else {
-            let puzzle = puzzleProvider.makePuzzle(size: clampedSize)
-            self.puzzle = puzzle
-        }
-        self.userGrid = Array(repeating: Array(repeating: nil, count: puzzle.size), count: puzzle.size)
+        self.puzzle = puzzle
+        self.userGrid = userGrid
+        self.selectedPosition = nil
+        self.isSolved = false
     }
 
     func select(_ position: GridPosition) {
@@ -116,6 +121,7 @@ final class KenKenGameViewModel: ObservableObject {
     }
 
     private func refreshSolvedState() {
+        // Explicitly run on the main actor; this method is only called from @MainActor-isolated contexts.
         isSolved = puzzle.isSolved(by: userGrid)
     }
 }

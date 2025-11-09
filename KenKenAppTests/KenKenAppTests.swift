@@ -1,6 +1,7 @@
 import XCTest
 @testable import KenKenApp
 
+@MainActor
 final class KenKenAppTests: XCTestCase {
 
     // MARK: - Generator / Latin Square
