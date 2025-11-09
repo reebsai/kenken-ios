@@ -21,9 +21,10 @@ struct KenKenGridView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let gridSize = min(proxy.size.width, proxy.size.height)
-            let rawCellSize = gridSize / CGFloat(puzzle.size)
-            let cellSize = max(rawCellSize, minCellSize)
+            // Use the available width to define a square grid.
+            // Do NOT clamp height; this ensures all 9 rows are visible.
+            let gridSize = proxy.size.width
+            let cellSize = max(gridSize / CGFloat(puzzle.size), minCellSize)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
             LazyVGrid(columns: columns, spacing: 0) {
