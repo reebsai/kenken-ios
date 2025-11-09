@@ -21,19 +21,9 @@ struct KenKenGridView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            // Let the parent define the width (we expect a square-ish area),
-            // but avoid hard-clamping the height so rows are not clipped.
-            let availableWidth = proxy.size.width
-            let availableHeight = proxy.size.height
-
-            // Use the limiting dimension only to derive a reasonable cell size,
-            // but do NOT force the grid to fit exactly into that dimension.
-            let limitingSide = min(availableWidth, availableHeight)
-
-            // Enforce a minimum tap target size; if the computed size is smaller,
-            // use the minimum, even if it means the grid becomes taller than the
-            // originally "expected" square area.
-            let cellSize = max(limitingSide / CGFloat(puzzle.size), minCellSize)
+            // Compute a square that fits inside the provided space.
+            let gridSize = min(proxy.size.width, proxy.size.height)
+            let cellSize = max(gridSize / CGFloat(puzzle.size), minCellSize)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
             VStack(spacing: 0) {
@@ -61,18 +51,12 @@ struct KenKenGridView: View {
                         }
                     }
                 }
-                // Fixed width so we keep a clean column layout; height is whatever
-                // the rows require. This prevents clipping when cellSize * rows
-                // exceeds the originally estimated square.
-                .frame(width: cellSize * CGFloat(puzzle.size), alignment: .topLeading)
+                // Do NOT hard clamp the grid height; let it expand to show all rows.
+                .frame(width: gridSize, alignment: .topLeading)
 
                 Spacer(minLength: 0)
             }
-            // Let the grid take needed height inside the provided area.
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-            #if DEBUG
-            print("[GridLayout] proxy=\(proxy.size) cellSize=\(cellSize) rows=\(puzzle.size) totalHeight=\(cellSize * CGFloat(puzzle.size))")
-            #endif
         }
     }
 
