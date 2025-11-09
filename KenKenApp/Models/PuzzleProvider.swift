@@ -2,20 +2,20 @@ import Foundation
 
 // MARK: - PuzzleProvider Protocol
 
-protocol PuzzleProvider {
+public protocol PuzzleProvider {
     func makePuzzle(size: Int) -> KenKenPuzzle
 }
 
 // MARK: - Default Implementation
 
-struct DefaultPuzzleProvider: PuzzleProvider {
-    let seed: UInt64?
+public struct DefaultPuzzleProvider: PuzzleProvider {
+    public let seed: UInt64?
 
-    init(seed: UInt64? = nil) {
+    public init(seed: UInt64? = nil) {
         self.seed = seed
     }
 
-    func makePuzzle(size: Int) -> KenKenPuzzle {
+    public func makePuzzle(size: Int) -> KenKenPuzzle {
         KenKenGenerator.makePuzzle(size: size, seed: seed)
     }
 }

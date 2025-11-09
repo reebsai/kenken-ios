@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Color Helpers
 
-extension Color {
+public extension Color {
     init(hex: UInt, alpha: Double = 1.0) {
         let red = Double((hex >> 16) & 0xff) / 255
         let green = Double((hex >> 8) & 0xff) / 255
@@ -21,10 +21,10 @@ extension Color {
 
 // MARK: - Shared Button Styles
 
-struct SoftButtonStyle: ButtonStyle {
-    var tint: Color
+public struct SoftButtonStyle: ButtonStyle {
+    public var tint: Color
 
-    func makeBody(configuration: Configuration) -> some View {
+    public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal)
             .background(
@@ -36,11 +36,11 @@ struct SoftButtonStyle: ButtonStyle {
     }
 }
 
-struct SoftButtonBackground: View {
-    let isPressed: Bool
-    let tint: Color
+public struct SoftButtonBackground: View {
+    public let isPressed: Bool
+    public let tint: Color
 
-    var body: some View {
+    public var body: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
             .fill(tint)
             .overlay(
