@@ -16,6 +16,7 @@
 		6F9AC0DC2C1210A80000001E /* NumberPadView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9AC0D32C1210A800000015 /* NumberPadView.swift */; };
 		6F9AC0DD2C1210A80000001F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6F9AC0D42C1210A800000016 /* Assets.xcassets */; };
 		6F9AC0F42C1215B000000034 /* KenKenAppTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F9AC0F22C1215B000000032 /* KenKenAppTests.swift */; };
+		1234567890ABCDEF12345678 /* SizeSelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1234567890ABCDEF12345679 /* SizeSelectionView.swift */; };
 		6F9AC1032C1219600000003E /* KenKenApp.app in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F9AC0DE2C1210A800000020 /* KenKenApp.app */; }; 
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 		6F9AC0D32C1210A800000015 /* NumberPadView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NumberPadView.swift; sourceTree = "<group>"; };
 		6F9AC0D42C1210A800000016 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		6F9AC0D52C1210A800000017 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		1234567890ABCDEF12345679 /* SizeSelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SizeSelectionView.swift; sourceTree = "<group>"; };
 		6F9AC0DE2C1210A800000020 /* KenKenApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KenKenApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F9AC0F22C1215B000000032 /* KenKenAppTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KenKenAppTests.swift; sourceTree = "<group>"; };
 		6F9AC0F32C1215B000000033 /* KenKenAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KenKenAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -108,6 +110,7 @@
 			children = (
 				6F9AC0D22C1210A800000014 /* KenKenGridView.swift */,
 				6F9AC0D32C1210A800000015 /* NumberPadView.swift */,
+				1234567890ABCDEF12345679 /* SizeSelectionView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -244,6 +247,7 @@
 				6F9AC0DB2C1210A80000001D /* KenKenGridView.swift in Sources */,
 				6F9AC0DA2C1210A80000001C /* KenKenGameViewModel.swift in Sources */,
 				6F9AC0D62C1210A800000018 /* KenKenApp.swift in Sources */,
+				1234567890ABCDEF12345678 /* SizeSelectionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

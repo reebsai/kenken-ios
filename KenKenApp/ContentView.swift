@@ -22,6 +22,10 @@ struct ContentView: View {
             if let size = selectedSize, let viewModel = viewModelHolder.viewModel {
                 gameView(size: size, viewModel: viewModel)
             } else {
+                // NOTE: If CI reports "Cannot find 'SizeSelectionView' in scope" here while it
+                //       compiles locally, ensure:
+                //       1) KenKenApp/Views/SizeSelectionView.swift is added to the KenKenApp target in KenKenApp.xcodeproj
+                //       2) CI is building the same xcodeproj (kenken-ios/KenKenApp.xcodeproj) and includes that file.
                 SizeSelectionView { size in
                     let clampedSize = min(max(size, 4), 9)
                     let vm = KenKenGameViewModel(size: clampedSize, seed: ContentView.debugSeed)
