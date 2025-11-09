@@ -20,16 +20,18 @@ struct KenKenGridView: View {
     }
 
     var body: some View {
-        // Parent (`ContentView`) already constrains this view to a square:
-        // `.frame(width: gridSide, height: gridSide)`.
-        // Here we ensure the N×N grid fills that square exactly so all rows are visible.
+        // Self-contained, square-safe grid:
+        // - Computes a square side from the available space (min(width, height)).
+        // - Centers the N×N grid inside that square so all rows/columns are visible.
         GeometryReader { proxy in
             let gridSide = min(proxy.size.width, proxy.size.height)
-            // Always scale cells to fit the available square: no enforced minimum that can clip rows.
             let cellSize = gridSide / CGFloat(puzzle.size)
             let columns = Array(repeating: GridItem(.fixed(cellSize), spacing: 0), count: puzzle.size)
 
-            LazyVGrid(columns: columns, spacing: 0) {
+            VStack {
+                Spacer(minLength: 0)
+
+                LazyVGrid(columns: columns, spacing: 0) {
                 ForEach(0..<puzzle.size, id: \.self) { row in
                     ForEach(0..<puzzle.size, id: \.self) { column in
                         let position = GridPosition(row: row, col: column)
@@ -53,9 +55,11 @@ struct KenKenGridView: View {
                     }
                 }
             }
-            // Make the grid fill the entire square passed by the parent.
             .frame(width: gridSide, height: gridSide, alignment: .topLeading)
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private func borderDirections(for position: GridPosition, cage: KenKenCage?) -> [Direction: CGFloat] {
