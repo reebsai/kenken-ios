@@ -30,7 +30,9 @@ final class KenKenAppTests: XCTestCase {
         let puzzleA = KenKenGenerator.makePuzzle(size: size, seed: seed)
         let puzzleB = KenKenGenerator.makePuzzle(size: size, seed: seed)
 
-        // If this ever fails in CI, log enough info to understand the mismatch.
+        // For seeded runs the generator is required to be deterministic.
+        XCTAssertEqual(puzzleA.size, puzzleB.size)
+
         if puzzleA.solution != puzzleB.solution || cageSignature(puzzleA.cages) != cageSignature(puzzleB.cages) {
             XCTFail(
                 """
@@ -42,15 +44,6 @@ final class KenKenAppTests: XCTestCase {
                 """
             )
         }
-
-        XCTAssertEqual(puzzleA.size, puzzleB.size)
-        XCTAssertEqual(puzzleA.solution, puzzleB.solution, "Same seed should produce identical solutions")
-        XCTAssertEqual(puzzleA.cages.count, puzzleB.cages.count, "Same seed should produce identical cage count")
-        XCTAssertEqual(
-            cageSignature(puzzleA.cages),
-            cageSignature(puzzleB.cages),
-            "Same seed should produce identical cage layout and parameters"
-        )
     }
 
     func testGeneratorDifferentSeedsUsuallyDiffer() {
