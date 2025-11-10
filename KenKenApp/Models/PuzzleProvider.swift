@@ -1,21 +1,26 @@
 import Foundation
 
 // MARK: - PuzzleProvider Protocol
+//
+// This protocol and its default implementation are kept internal to the app
+// module. We avoid exposing `KenKenPuzzle` as `public` API, which keeps CI
+// builds simple and prevents access-control violations when building as an
+// app (not a reusable framework).
 
-public protocol PuzzleProvider {
+protocol PuzzleProvider {
     func makePuzzle(size: Int) -> KenKenPuzzle
 }
 
 // MARK: - Default Implementation
 
-public struct DefaultPuzzleProvider: PuzzleProvider {
-    public let seed: UInt64?
+struct DefaultPuzzleProvider: PuzzleProvider {
+    let seed: UInt64?
 
-    public init(seed: UInt64? = nil) {
+    init(seed: UInt64? = nil) {
         self.seed = seed
     }
 
-    public func makePuzzle(size: Int) -> KenKenPuzzle {
+    func makePuzzle(size: Int) -> KenKenPuzzle {
         KenKenGenerator.makePuzzle(size: size, seed: seed)
     }
 }
