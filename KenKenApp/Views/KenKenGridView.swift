@@ -7,9 +7,6 @@ struct KenKenGridView: View {
     let cageEvaluationProvider: (KenKenCage) -> KenKenCage.Evaluation
     let onSelect: (GridPosition) -> Void
 
-    // Minimum tap size for comfortable interaction on small devices.
-    private let minCellSize: CGFloat = 32
-
     struct Direction: OptionSet, Hashable {
         let rawValue: Int
 
@@ -20,9 +17,6 @@ struct KenKenGridView: View {
     }
 
     var body: some View {
-        // Self-contained, square-safe grid:
-        // - Computes a square side from the available space (min(width, height)).
-        // - Centers the N×N grid inside that square so all rows/columns are visible.
         GeometryReader { proxy in
             let gridSide = min(proxy.size.width, proxy.size.height)
             let cellSize = gridSide / CGFloat(puzzle.size)
@@ -32,34 +26,35 @@ struct KenKenGridView: View {
                 Spacer(minLength: 0)
 
                 LazyVGrid(columns: columns, spacing: 0) {
-                ForEach(0..<puzzle.size, id: \.self) { row in
-                    ForEach(0..<puzzle.size, id: \.self) { column in
-                        let position = GridPosition(row: row, col: column)
-                        let cage = puzzle.cage(for: position)
-                        let cellState = cellStateProvider(position)
-                        let cageEvaluation = cage.map(cageEvaluationProvider) ?? .incomplete
+                    ForEach(0..<puzzle.size, id: \.self) { row in
+                        ForEach(0..<puzzle.size, id: \.self) { column in
+                            let position = GridPosition(row: row, col: column)
+                            let cage = puzzle.cage(for: position)
+                            let cellState = cellStateProvider(position)
+                            let cageEvaluation = cage.map(cageEvaluationProvider) ?? .incomplete
 
-                        CellView(
-                            cellState: cellState,
-                            cage: cage,
-                            cageEvaluation: cageEvaluation,
-                            value: userGrid[row][column],
-                            isHeader: puzzle.isHeader(position),
-                            borders: borderDirections(for: position, cage: cage)
-                        )
-                        .frame(width: cellSize, height: cellSize)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            onSelect(position)
+                            CellView(
+                                cellState: cellState,
+                                cage: cage,
+                                cageEvaluation: cageEvaluation,
+                                value: userGrid[row][column],
+                                isHeader: puzzle.isHeader(position),
+                                borders: borderDirections(for: position, cage: cage)
+                            )
+                            .frame(width: cellSize, height: cellSize)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                onSelect(position)
+                            }
                         }
                     }
                 }
-            }
-            .frame(width: gridSide, height: gridSide, alignment: .topLeading)
+                .frame(width: gridSide, height: gridSide, alignment: .topLeading)
 
-            Spacer(minLength: 0)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
     }
 
     private func borderDirections(for position: GridPosition, cage: KenKenCage?) -> [Direction: CGFloat] {
@@ -103,7 +98,6 @@ private struct CellView: View {
 
     var body: some View {
         ZStack {
-            // Background and outline
             RoundedRectangle(cornerRadius: 6)
                 .fill(backgroundColor)
                 .shadow(color: shadowColor, radius: shadowRadius, x: 0, y: 1.5)
@@ -111,7 +105,6 @@ private struct CellView: View {
             RoundedRectangle(cornerRadius: 6)
                 .strokeBorder(cellOutlineColor, lineWidth: 1)
 
-            // Centered value
             if let value {
                 Text("\(value)")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
@@ -120,7 +113,6 @@ private struct CellView: View {
                     .animation(.spring(response: 0.25, dampingFraction: 0.8), value: cellState == .selected)
             }
 
-            // Cage header stays in top-left
             if let cage, isHeader {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(headerText(for: cage))
@@ -173,7 +165,6 @@ private struct CellView: View {
     private var backgroundColor: Color {
         switch cellState {
         case .selected:
-            // Stronger highlight for active cell.
             return Color.accentColor.opacity(0.28)
         case .conflict:
             return Color.red.opacity(0.3)
